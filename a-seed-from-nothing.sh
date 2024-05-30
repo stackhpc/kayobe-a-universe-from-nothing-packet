@@ -3,9 +3,6 @@
 # Reset SECONDS
 SECONDS=0
 
-# Cloud User: cloud-user (CentOS) or ubuntu?
-CLOUD_USER=ubuntu
-
 ENABLE_OVN=true
 
 # Registry IP
@@ -14,8 +11,7 @@ registry_ip=$1
 echo "[INFO] Given docker registry IP: $registry_ip"
 
 # Disable the firewall.
-if [[ "${CLOUD_USER}" = "ubuntu" ]]
-then
+if type apt; then
     grep -q $HOSTNAME /etc/hosts || (echo "$(ip r | grep -o '^default via.*src [0-9.]*' | awk '{print $NF}') $HOSTNAME" | sudo tee -a /etc/hosts)
     dpkg -l ufw && sudo systemctl is-enabled ufw && sudo systemctl stop ufw && sudo systemctl disable ufw
 else
@@ -26,8 +22,7 @@ else
 fi
 
 # Useful packages
-if [[ "${CLOUD_USER}" = "ubuntu" ]]
-then
+if type apt; then
     # Avoid the interactive dialog prompting for service restart: set policy to leave services unchanged
     echo "\$nrconf{restart} = 'l';" | sudo tee /etc/needrestart/conf.d/90-aufn.conf
     sudo apt update
@@ -45,8 +40,7 @@ EOF
 sudo sysctl --load /etc/sysctl.d/70-ipv6.conf
 
 # CentOS Stream 8 requires network-scripts.  Rocky Linux 9 and onwards use NetworkManager.
-if [[ "${CLOUD_USER}" = "cloud-user" ]]
-then
+if type dnf; then
     case $(grep -o "[89]\.[0-9]" /etc/redhat-release) in
       "8.*")
         sudo dnf install -y network-scripts
@@ -63,8 +57,7 @@ then
         exit -1
         ;;
     esac
-elif [[ "${CLOUD_USER}" = "ubuntu" ]]
-then
+elif type apt; then
     # Prepare for disabling of Netplan and enabling of systemd-networkd.
     # Netplan has an interaction with systemd and cloud-init to populate
     # systemd-networkd files, but ephemerally.  If /etc/systemd/network is
@@ -84,6 +77,7 @@ fi
 set -e
 
 # Ensure an ssh key is generated
+CLOUD_USER=$(ls /home | grep -v lab | grep -v stack | head -1)
 # NOTE: you might think ~${CLOUD_USER} would work but apparently not
 CLOUD_USER_DIR=/home/${CLOUD_USER}
 keyfile="$HOME/.ssh/id_rsa"
