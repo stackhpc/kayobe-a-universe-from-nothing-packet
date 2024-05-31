@@ -101,6 +101,10 @@ cd $HOME
 [[ -d kayobe ]] || git clone https://opendev.org/openstack/kayobe.git -b stable/2023.1
 cd kayobe
 
+# Force efi boot
+sed -i 'N;s/stackhpc.libvirt-vm\n    version:.*/stackhpc.libvirt-vm\n    version: v1.16.0/' requirements.yml
+sed -i 'N;s/console_log_enabled: true\n.*/console_log_enabled: true\n          boot_firmware: efi\n/' ansible/seed-vm-provision.yml
+
 # Bump the provisioning time - it can be lengthy on virtualised storage
 sed -i.bak 's%^[# ]*wait_active_timeout:.*%    wait_active_timeout: 5000%' ~/kayobe/ansible/overcloud-provision.yml
 
@@ -110,7 +114,7 @@ sed -i.bak 's%^[# ]*wait_active_timeout:.*%    wait_active_timeout: 5000%' ~/kay
 # Clone this Kayobe configuration.
 mkdir -p config/src
 cd config/src/
-[[ -d kayobe-config ]] || git clone https://github.com/stackhpc/a-universe-from-nothing.git -b stable/2023.1 kayobe-config
+[[ -d kayobe-config ]] || git clone https://github.com/stackhpc/a-universe-from-nothing.git -b fix-dns kayobe-config
 
 # Set default registry name to the one we just created
 sed -i.bak 's/^docker_registry:.*/docker_registry: '$registry_ip':4000/' kayobe-config/etc/kayobe/docker.yml
