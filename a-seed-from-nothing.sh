@@ -155,6 +155,8 @@ fi
 # NOTE: This should work the first time because the packet configuration uses a
 # custom docker registry.  However, there are sometimes issues with Docker starting up on the seed (FIXME)
 if ! ./dev/seed-deploy.sh; then
+    # Workaround for lack of access to public DNS
+    ssh stack@192.168.33.5 sudo sed -i s/8.8.8.8/141.20.1.3/g /etc/resolv.conf
     # Deploy a seed VM. Should work this time.
     ./dev/seed-deploy.sh
 fi
