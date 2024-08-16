@@ -79,3 +79,10 @@ variable "bastion_floating_ip" {
   description = "Bastion floating IP"
   default     = "0.0.0.0"
 }
+
+variable "dns_zone_name" {
+  description = "The name of the DNS zone to use for creating DNS records. Leave empty or null to skip DNS record creation."
+  type        = string
+  nullable    = true
+  default     = null
+}
