@@ -169,8 +169,6 @@ resource "openstack_dns_recordset_v2" "lab_dns" {
   type        = "A"
   ttl         = 300
   records     = [openstack_compute_instance_v2.lab[count.index].network[0].fixed_ip_v4]
-
-  depends_on = [openstack_compute_instance_v2.lab]
 }
 
 resource "openstack_compute_instance_v2" "lab" {
