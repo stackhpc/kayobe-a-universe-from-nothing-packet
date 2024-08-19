@@ -81,7 +81,7 @@ variable "bastion_floating_ip" {
 }
 
 variable "dns_zone_name" {
-  description = "The name of the DNS zone to use for creating DNS records. Leave empty or null to skip DNS record creation."
+  description = "The name of the DNS zone to use for creating DNS records. Leave null to skip DNS record creation."
   type        = string
   nullable    = true
   default     = null
