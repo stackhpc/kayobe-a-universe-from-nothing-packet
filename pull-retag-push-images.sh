@@ -5,11 +5,7 @@ set -e
 # Reset SECONDS
 SECONDS=0
 
-# DISTRO: CentOS or Ubuntu?
-DISTRO=ubuntu
-
-if [[ "${DISTRO}" = "ubuntu" ]]
-then
+if type apt; then
     # Install and start docker
     [[ -f /usr/share/keyrings/docker-archive-keyring.gpg ]] || (curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg)
     echo \
@@ -43,8 +39,7 @@ fi
 
 registry=quay.io
 acct=openstack.kolla
-if [[ "${DISTRO}" = "ubuntu" ]]
-then
+if type apt; then
     tag=${1:-2023.1-ubuntu-jammy}
 else
     tag=${1:-2023.1-rocky-9}
