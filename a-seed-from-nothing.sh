@@ -96,43 +96,38 @@ then
     sudo chown ${CLOUD_USER}.${CLOUD_USER} ${CLOUD_USER_DIR}/.ssh/authorized_keys
 fi
 
-# Clone Kayobe.
+# Clone Beokay.
 cd $HOME
-[[ -d kayobe ]] || git clone https://opendev.org/openstack/kayobe.git -b stable/2023.1
-cd kayobe
+git clone https://github.com/stackhpc/beokay.git -b master
+
+# Use Beokay to bootstrap your control host.
+[[ -d deployment ]] || beokay/beokay.py create --base-path ~/deployment --kayobe-repo https://opendev.org/openstack/kayobe.git --kayobe-branch stable/2023.1 --kayobe-config-repo https://github.com/stackhpc/a-universe-from-nothing.git --kayobe-config-branch stable/2023.1
 
 # Bump the provisioning time - it can be lengthy on virtualised storage
-sed -i.bak 's%^[# ]*wait_active_timeout:.*%    wait_active_timeout: 5000%' ~/kayobe/ansible/overcloud-provision.yml
+sed -i.bak 's%^[# ]*wait_active_timeout:.*%    wait_active_timeout: 5000%' ~/deployment/src/kayobe/ansible/overcloud-provision.yml
 
 # Clone the Tenks repository.
+cd ~/deployment/src/
 [[ -d tenks ]] || git clone https://opendev.org/openstack/tenks.git
-
-# Clone this Kayobe configuration.
-mkdir -p config/src
-cd config/src/
-[[ -d kayobe-config ]] || git clone https://github.com/stackhpc/a-universe-from-nothing.git -b stable/2023.1 kayobe-config
+cd
 
 # Set default registry name to the one we just created
-sed -i.bak 's/^docker_registry:.*/docker_registry: '$registry_ip':4000/' kayobe-config/etc/kayobe/docker.yml
+sed -i.bak 's/^docker_registry:.*/docker_registry: '$registry_ip':4000/' ~/deployment/src/kayobe-config/etc/kayobe/docker.yml
 
 # Configure host networking (bridge, routes & firewall)
-./kayobe-config/configure-local-networking.sh
-
-# Install kayobe.
-cd ~/kayobe
-./dev/install-dev.sh
+~/deployment/src/kayobe-config/configure-local-networking.sh
 
 # Enable OVN flags
 if $ENABLE_OVN
 then
-    cat <<EOF | sudo tee -a config/src/kayobe-config/etc/kayobe/bifrost.yml
+    cat <<EOF | sudo tee -a ~/deployment/src/kayobe-config/etc/kayobe/bifrost.yml
 kolla_bifrost_extra_kernel_options:
   - "console=ttyS0"
 EOF
-    cat <<EOF | sudo tee -a config/src/kayobe-config/etc/kayobe/kolla.yml
+    cat <<EOF | sudo tee -a ~/deployment/src/kayobe-config/etc/kayobe/kolla.yml
 kolla_enable_ovn: yes
 EOF
-    cat <<EOF | sudo tee -a config/src/kayobe-config/etc/kayobe/neutron.yml
+    cat <<EOF | sudo tee -a ~/deployment/src/kayobe-config/etc/kayobe/neutron.yml
 kolla_neutron_ml2_type_drivers:
   - geneve
   - vlan
@@ -144,21 +139,24 @@ kolla_neutron_ml2_tenant_network_types:
 EOF
 fi
 
+# Set Environment variables for Kayobe dev scripts
+export KAYOBE_CONFIG_SOURCE_PATH=~/deployment/src/kayobe-config
+export KAYOBE_VENV_PATH=~/deployment/venvs/kayobe
+
 # Deploy hypervisor services.
-./dev/seed-hypervisor-deploy.sh
+~/deployment/src/kayobe/dev/seed-hypervisor-deploy.sh
 
 # Deploy a seed VM.
 # NOTE: This should work the first time because the packet configuration uses a
 # custom docker registry.  However, there are sometimes issues with Docker starting up on the seed (FIXME)
-if ! ./dev/seed-deploy.sh; then
+if ! ~/deployment/src/kayobe/dev/seed-deploy.sh; then
     # Deploy a seed VM. Should work this time.
-    ./dev/seed-deploy.sh
+    ~/deployment/src/kayobe/dev/seed-deploy.sh
 fi
 
 # Run TENKS
-cd ~/kayobe
-export TENKS_CONFIG_PATH=config/src/kayobe-config/tenks.yml
-./dev/tenks-deploy-overcloud.sh ./tenks
+export TENKS_CONFIG_PATH=~/deployment/src/kayobe-config/tenks.yml
+~/deployment/src/kayobe/dev/tenks-deploy-overcloud.sh ~/deployment/src/tenks
 
 # Duration
 duration=$SECONDS
