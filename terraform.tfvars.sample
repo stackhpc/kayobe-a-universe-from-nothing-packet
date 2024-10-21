@@ -1,4 +1,11 @@
-lab_count     = 6
-lab_net_ipv4  = "stackhpc-ipv4-vlan-v2"
-lab_prefix    = "stackhpc"
-image_id      = "set_me"
+lab_count     = 12
+lab_net_ipv4  = "stackhpc-ipv4-aufn"
+image_id      = "137f31eb-454b-4835-84c5-ad4cc3e22110"
+image_name    = "Rocky9"
+lab_flavor    = "aufn.v1.large"
+registry_flavor    = "general.v1.medium"
+boot_labs_from_volume = true
+image_user = "cloud-user"
+allocate_floating_ips = false
+create_bastion = true
+bastion_floating_ip = "185.45.78.149"
