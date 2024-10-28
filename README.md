@@ -2,7 +2,8 @@
 
 Terraform for the following configuration:
 
-* OpenStack virtualised instances
+* OpenStack virtualised lab instances
+* An OpenStack virtualised container registry instance
 * Cinder volumes for instance storage
 * Floating IPs for networking
 
@@ -12,24 +13,26 @@ OpenStack infrastructure.
 
 ## Prerequisites
 
-* A Neutron network the instances can attach to, with router
+* A Neutron network the instances can attach to, with a router
 * Plenty of resource quota
+* Terraform installed (see instructions
+  [here](https://developer.hashicorp.com/terraform/install))
 
 ## Software Components
 
-[Kayobe](https://docs.openstack.org/kayobe/latest/) enables deployment of
+[Kayobe](https://docs.openstack.org/kayobe/latest/) enables the deployment of
 containerised OpenStack to bare metal.
 
 # Instructions for deployment
 
-After cloning this repo, source the regular OpenStack rc file with necessary
-vars for accessing the *A Universe From Nothing* lab project.
+After cloning this repo, source the regular OpenStack rc file with the
+necessary vars for accessing the *A Universe From Nothing* lab project.
 
-There are a various variables available for configuration. These can be seen
+There are various variables available for configuration. These can be seen
 in `vars.tf`, and can be set in `terraform.tfvars` (see sample file
 `terraform.tfvars.sample`).
 
-Next up is the `terraform` bit assuming it is already installed:
+Create the resources using Terraform:
 
     terraform init
     terraform plan
@@ -37,7 +40,7 @@ Next up is the `terraform` bit assuming it is already installed:
 
 To reprovision a lab machine:
 
-    terraform taint openstack_compute_instance_v2.#
+    terraform taint openstack_compute_instance_v2.lab[#]
     terraform apply -auto-approve
 
 where `#` is the lab index which can be obtained from the web UI.
@@ -54,7 +57,7 @@ SSH in to your lab instance by running and entering the provided password:
 
     ssh lab@<lab-ip-address> -o PreferredAuthentications=password
 
-The default password is the id of the lab instance. As such, it is recommeded
+The default password is the id of the lab instance. As such, it is recommended
 that you run `passwd` immediately to change the default password.
 
 ## Nested virtualisation
@@ -75,7 +78,7 @@ When complete, it should report an elapsed time as follows:
 
     [INFO] 22 minutes and 3 seconds elapsed.
 
-## Inspect the bifrost container inside your seed VM:
+## Inspect the Bifrost container inside your seed VM:
 
     ssh stack@192.138.33.5
     docker ps
@@ -85,7 +88,7 @@ When complete, it should report an elapsed time as follows:
 
 Look at the steps involved in deploying Kayobe control plane:
 
-    < a-universe-from-seed.sh
+    less a-universe-from-seed.sh
 
 # Wrapping up
 

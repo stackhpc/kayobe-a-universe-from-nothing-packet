@@ -1,5 +1,5 @@
 resource "openstack_compute_keypair_v2" "ufn_lab_key" {
-  name       = "ufn_lab_key"
+  name       = "${var.lab_prefix}_lab_key"
   public_key = tls_private_key.default.public_key_openssh
 }
 
@@ -110,6 +110,67 @@ resource "null_resource" "registry" {
   }
 }
 
+resource "openstack_compute_secgroup_v2" "AUFN" {
+  name        = "${var.lab_prefix}-lab-rules"
+  description = "Access rules for AUFN lab deployment"
+
+  rule {
+    from_port   = 22
+    to_port     = 22
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    from_port   = 80
+    to_port     = 80
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    from_port   = 3000
+    to_port     = 3000
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    from_port   = 5601
+    to_port     = 5601
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    from_port   = 9091
+    to_port     = 9091
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    from_port   = 9093
+    to_port     = 9093
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+}
+
+data "openstack_dns_zone_v2" "lab_zone" {
+  count = var.dns_zone_name != null ? 1 : 0
+  name  = var.dns_zone_name
+}
+
+resource "openstack_dns_recordset_v2" "lab_dns" {
+  count       = var.dns_zone_name != null ? var.lab_count : 0
+  zone_id     = data.openstack_dns_zone_v2.lab_zone[0].id
+  name        = format("%s-lab-%02d.%s", var.lab_prefix, count.index, var.dns_zone_name)
+  type        = "A"
+  ttl         = 300
+  records     = [openstack_compute_instance_v2.lab[count.index].network[0].fixed_ip_v4]
+}
+
 resource "openstack_compute_instance_v2" "lab" {
 
   count           = var.lab_count
@@ -117,6 +178,7 @@ resource "openstack_compute_instance_v2" "lab" {
   image_name      = var.image_name
   flavor_name     = var.lab_flavor
   key_pair        = openstack_compute_keypair_v2.ufn_lab_key.name
+  security_groups = ["default", openstack_compute_secgroup_v2.AUFN.name ]
 
   dynamic "block_device" {
     for_each = var.boot_labs_from_volume ? [1] : []
