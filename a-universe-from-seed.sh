@@ -8,19 +8,10 @@ SECONDS=0
 
 # FIXME: IP on public1 subnet disappears for braio interface during the course
 # of a-seed-from-nothing.sh script. Rerun the configuration script to re-add it.
-cd ~/kayobe/config/src/
-./kayobe-config/configure-local-networking.sh
-
-# Change to kayobe directory
-cd ~/kayobe
-
-# Create some 'bare metal' VMs for the controller and compute node.
-# NOTE: Make sure to use ./tenks, since just ‘tenks’ will install via PyPI.
-export TENKS_CONFIG_PATH=config/src/kayobe-config/tenks.yml
-./dev/tenks-deploy.sh ./tenks
+~/deployment/src/kayobe-config/configure-local-networking.sh
 
 # Activate the Kayobe environment, to allow running commands directly.
-source dev/environment-setup.sh
+source ~/deployment/env-vars.sh
 
 # Inspect and provision the overcloud hardware:
 kayobe overcloud inventory discover
@@ -32,7 +23,7 @@ kayobe overcloud provision
 kayobe overcloud host configure
 kayobe overcloud container image pull
 kayobe overcloud service deploy
-source config/src/kayobe-config/etc/kolla/public-openrc.sh
+source ~/deployment/src/kayobe-config/etc/kolla/public-openrc.sh
 kayobe overcloud post configure
 
 # At this point it should be possible to access the Horizon GUI via the seed
@@ -49,12 +40,13 @@ kayobe overcloud host command run --command "iptables -P FORWARD ACCEPT" --becom
 
 # The following script will register some resources in OpenStack to enable
 # booting up a tenant VM.
-source config/src/kayobe-config/etc/kolla/public-openrc.sh
-./config/src/kayobe-config/init-runonce.sh
+source ~/deployment/src/kayobe-config/etc/kolla/public-openrc.sh
+~/deployment/src/kayobe-config/init-runonce.sh
 
 # Following the instructions displayed by the above script, boot a VM.
 # You'll need to have activated the ~/os-venv virtual environment.
-source ~/os-venv/bin/activate
+deactivate
+source ~/deployment/venvs/os-venv/bin/activate
 openstack server create --image cirros --flavor m1.tiny --key-name mykey --network demo-net demo1
 
 # Assign a floating IP to the server to make it accessible.
