@@ -28,7 +28,7 @@ if type apt; then
     sudo apt update
     sudo apt install -y git tmux lvm2 iptables
 else
-    sudo dnf install -y git tmux lvm2 patch
+    sudo dnf install -y git tmux lvm2 patch openssh
 fi
 
 # Work around connectivity issues seen while configuring this node as seed
